@@ -39,7 +39,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // 1. Сохраняем email в таблицу subscribers
     const { error: dbError } = await supabase
       .from('subscribers')
       .upsert({ email }, { onConflict: 'email' });
@@ -53,7 +52,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 2. Генерируем временную ссылку на файл (действует 1 час = 3600 сек)
     const { data: signedData, error: signedError } = await supabase
       .storage
       .from('private-files')
@@ -68,7 +66,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 3. Отправляем письмо через Resend
     const { data: sentData, error: emailError } = await resend.emails.send({
       from: 'REBOND <onboarding@resend.dev>',
       to: [email],
@@ -113,7 +110,5 @@ exports.handler = async (event) => {
       headers: jsonHeaders,
       body: JSON.stringify({ error: 'Erreur interne' }),
     };
-  }
-};
   }
 };
