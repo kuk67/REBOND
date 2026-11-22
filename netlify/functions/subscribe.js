@@ -1,7 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 
-// Ключи подтянутся из настроек Netlify (которые мы добавили ранее)
+// Ключи подтянутся из настроек Netlify
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,11 +30,24 @@ exports.handler = async (event) => {
 
     if (dbError) {
       console.error('Ошибка базы данных:', dbError);
-      // Продолжаем, даже если email уже существует
     }
 
-    // 2. Отправляем письмо через Resend
-    // ВНИМАНИЕ: Замени ССЫЛКА_НА_ФАЙЛ на прямую ссылку из твоего Supabase Storage
+    // 2. Генерируем временную подписанную ссылку (Signed URL)
+    // Ссылка будет работать 3600 секунд (1 час)
+    const { data: signedData, error: signedError } = await supabase
+      .storage
+      .from('private-files')
+      .createSignedUrl('Les 7 Erreurs Mortelles Post-Rupture.pdf', 3600);
+
+    if (signedError || !signedData || !signedData.signedUrl) {
+      console.error('Ошибка генерации ссылки:', signedError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Ошибка генерации ссылки на файл' })
+      };
+    }
+
+    // 3. Отправляем письмо через Resend с этой временной ссылкой
     const emailData = await resend.emails.send({
       from: 'REBOND <onboarding@resend.dev>', // В будущем замени на свой домен
       to: [email],
@@ -45,7 +58,7 @@ exports.handler = async (event) => {
           <p>Merci de votre confiance. Voici votre guide gratuit pour vous aider à préserver votre sérénité.</p>
           <p>Cliquez sur le bouton ci-dessous pour le télécharger :</p>
           <div style="margin: 30px 0;">
-            <a href="ССЫЛКА_НА_ФАЙЛ_В_SUPABASE" 
+            <a href="${signedData.signedUrl}" 
                style="background-color: #d4af37; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;">
                Télécharger le Guide PDF
             </a>
@@ -68,4 +81,5 @@ exports.handler = async (event) => {
     };
   }
 };
+
 
