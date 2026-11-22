@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 
 // Ключи подтянутся из настроек Netlify
-const supabase = createClient https://dbmmalszymcrlkjsamfm.supabase.co (process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(process.env.SUPABASE_https://dbmmalszymcrlkjsamfm.supabase.co, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 exports.handler = async (event) => {
